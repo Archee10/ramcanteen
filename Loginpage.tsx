@@ -29,7 +29,7 @@ const Loginpage: React.FC = () => {
 
     try {
       // API call to login user
-      const response = await axios.post('http://192.168.209.68:5000/api/login', {
+      const response = await axios.post('http://192.168.2.7:5000/api/login', {
         username,
         password,
       });
@@ -37,6 +37,7 @@ const Loginpage: React.FC = () => {
       const user = response.data.user;
 
       if (user) {
+        await AsyncStorage.setItem('user_id', user.id); // Store the user's _id in AsyncStorage
         await AsyncStorage.setItem('userDetails', JSON.stringify(user)); // Store user details in AsyncStorage
         await AsyncStorage.setItem('userSession', 'true'); // Set a session key to indicate user is logged in
         Alert.alert(response.data.message); // Success message

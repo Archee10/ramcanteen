@@ -19,9 +19,10 @@ export type RootStackParamList = {
   UserDetails: undefined;
   Snacks: undefined;
   Sandwich: undefined;
-  CategoryItems: { categoryName: string };
+  CategoryItems: { categoryName: string,userID: string  };
   ItemDetails: { itemName: string };
   Reviews: undefined; 
+  
 };
 
 // Export screen props for specific screens if needed

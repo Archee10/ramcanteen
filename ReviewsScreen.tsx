@@ -1,26 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from './AppNavigator'; // Import your RootStackParamList
 
-// Define the type for the navigation props
-type ReviewsScreenProps = NativeStackScreenProps<RootStackParamList, 'Reviews'>;
+// Define the type for a review
+interface Review {
+  _id: string;
+  user_id: string;
+  item: string;
+  review: string;
+  rating: number;
+}
 
-const ReviewsScreen: React.FC<ReviewsScreenProps> = ({ navigation }) => {
-  const [reviews, setReviews] = useState<any[]>([]);
+const ReviewsScreen = () => {
+  const [reviews, setReviews] = useState<Review[]>([]); // Define the type for reviews array
   const [newReview, setNewReview] = useState('');
-  const [rating, setRating] = useState(1); // Rating from 1 to 5
+  const [rating, setRating] = useState<number>(1); // Ensure rating is a number
   const [item, setItem] = useState('');
 
-  // Fetch reviews when component mounts
   useEffect(() => {
     const fetchReviews = async () => {
-      const userId = await AsyncStorage.getItem('user_id'); // Get user ID from AsyncStorage
+      const userId = await AsyncStorage.getItem('user_id');
       if (userId) {
-        const response = await fetch(`https://your-api-url/reviews/${userId}`);
-        const data = await response.json();
-        setReviews(data); // Set reviews state with fetched data
+        try {
+          const response = await fetch(`http://192.168.2.7:5000/api/reviews/${userId}`);
+          const data: Review[] = await response.json(); // Explicitly type the response
+          setReviews(data);
+        } catch (error) {
+          console.error('Error fetching reviews:', error);
+        }
       }
     };
 
@@ -28,75 +35,73 @@ const ReviewsScreen: React.FC<ReviewsScreenProps> = ({ navigation }) => {
   }, []);
 
   const handleAddReview = async () => {
-    const userId = await AsyncStorage.getItem('user_id'); // Get user ID from AsyncStorage
+    const userId = await AsyncStorage.getItem('user_id');
+    if (!userId) {
+      Alert.alert('Error', 'User not found. Please log in.');
+      return;
+    }
 
-    if (newReview.trim() && item.trim() && userId) {
-      const newReviewData = {
+    const trimmedReview = newReview.trim();
+    const trimmedItem = item.trim();
+
+    if (trimmedReview && trimmedItem && rating) {
+      const reviewData: Review = {
+        _id: Math.random().toString(), // Temporary ID
         user_id: userId,
-        item: item,
-        review: newReview,
-        rating: rating,
+        item: trimmedItem,
+        review: trimmedReview,
+        rating,
       };
 
       try {
-        const response = await fetch('https://your-api-url/reviews', {
+        const response = await fetch('http://192.168.2.7:5000/api/reviews', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(newReviewData),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reviewData),
         });
-
         const data = await response.json();
+
         if (data.message === 'Review added successfully') {
-          // Update the UI to show the new review
-          setReviews([...reviews, newReviewData]);
+          setReviews([...reviews, reviewData]);
           setNewReview('');
           setItem('');
           setRating(1);
         } else {
-          Alert.alert('Error', 'There was an issue adding your review');
+          Alert.alert('Error', 'Failed to add review.');
         }
       } catch (error) {
-        console.error(error);
-        Alert.alert('Error', 'There was an issue connecting to the server');
+        Alert.alert('Error', 'Failed to connect to the server.');
       }
     } else {
-      Alert.alert('Please fill all fields');
+      Alert.alert('Please fill all fields.');
     }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Reviews</Text>
-
-      {/* Show Existing Reviews */}
       <FlatList
         data={reviews}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
           <View style={styles.reviewCard}>
-            <Text style={styles.reviewText}>
-              <Text style={styles.italic}>{item.item}</Text>
-            </Text>
+            <Text style={styles.reviewText}>{item.item}</Text>
             <Text style={styles.reviewText}>Rating: {item.rating} stars</Text>
             <Text style={styles.reviewText}>{item.review}</Text>
           </View>
         )}
       />
-
-      {/* Add New Review Section */}
       <TextInput
         style={styles.input}
         placeholder="Item Name"
         value={item}
-        onChangeText={(text) => setItem(text)}
+        onChangeText={setItem}
       />
       <TextInput
         style={styles.input}
         placeholder="Your Review"
         value={newReview}
-        onChangeText={(text) => setNewReview(text)}
+        onChangeText={setNewReview}
         multiline
       />
       <TextInput
@@ -106,7 +111,6 @@ const ReviewsScreen: React.FC<ReviewsScreenProps> = ({ navigation }) => {
         keyboardType="numeric"
         onChangeText={(text) => setRating(Number(text))}
       />
-
       <TouchableOpacity style={styles.button} onPress={handleAddReview}>
         <Text style={styles.buttonText}>Add Review</Text>
       </TouchableOpacity>
@@ -115,54 +119,13 @@ const ReviewsScreen: React.FC<ReviewsScreenProps> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  input: {
-    height: 40,
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 5,
-    marginBottom: 10,
-    paddingLeft: 10,
-  },
-  reviewCard: {
-    backgroundColor: '#fff',
-    padding: 10,
-    marginBottom: 15,
-    borderRadius: 5,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 2,
-  },
-  reviewText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  italic: {
-    fontStyle: 'italic',
-  },
-  button: {
-    backgroundColor: '#d2691e',
-    padding: 15,
-    borderRadius: 10,
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  container: { flex: 1, padding: 20, backgroundColor: '#f5f5f5' },
+  header: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
+  input: { borderWidth: 1, borderColor: '#ccc', marginBottom: 10, padding: 10 },
+  reviewCard: { marginBottom: 15, backgroundColor: '#fff', padding: 10 },
+  reviewText: { fontSize: 16 },
+  button: { backgroundColor: '#007BFF', padding: 10 },
+  buttonText: { color: '#fff', textAlign: 'center' },
 });
 
 export default ReviewsScreen;

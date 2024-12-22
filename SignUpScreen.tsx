@@ -78,7 +78,7 @@ const SignUpScreen: React.FC = () => {
 
     try {
       // API call to register user
-      const response = await axios.post('http://192.168.209.68:5000/api/signup', {
+      const response = await axios.post('http://192.168.2.7:5000/api/signup', {
         username,
         email,
         password,
