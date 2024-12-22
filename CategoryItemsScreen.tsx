@@ -64,7 +64,7 @@ const categoriesData: CategoryData= {
     { name: 'Chips Cheese Sandwich', price: '₹80', image: require('./chipssandwich.jpeg') },
     { name: 'Chips Noodles Toast Sandwich', price: '₹80', image: require('./noodlessandwich.jpeg') },
     { name: 'Russian Salad Cheese Sandwich', price: '₹80', image: require('./russiansaladsandwich.jpeg') },
-  ],  
+  ],
   Rolls: [
     { name: 'Paneer Tikka Bread Roll', price: '₹100', image: require('./paneertikkabreadroll.jpeg') },
     { name: 'Veg Bread Roll', price: '₹70', image: require('./vegrbreadroll.jpeg') },
